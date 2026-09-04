@@ -8,6 +8,13 @@ pub struct MgitConfig {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+pub struct ScanSummary {
+    pub total_repos: usize,
+    pub total_modules: usize,
+    pub modules: BTreeMap<String, Vec<String>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct RepoStatus {
     pub name: String,
     pub path: String,
