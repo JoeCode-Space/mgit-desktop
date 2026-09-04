@@ -4,6 +4,12 @@ import { useTheme } from './hooks/useTheme';
 import { Header } from './components/Header';
 import { RepoTable } from './components/RepoTable';
 import { LogDrawer } from './components/LogDrawer';
+import { ScanModal } from './components/modals/ScanModal';
+import { CheckoutModal } from './components/modals/CheckoutModal';
+import { MergeModal } from './components/modals/MergeModal';
+import { CommitModal } from './components/modals/CommitModal';
+import { ModuleModal } from './components/modals/ModuleModal';
+import type { MgitConfig } from './types';
 
 export function App() {
   const {
@@ -23,7 +29,11 @@ export function App() {
     toggleSelectAll,
     runPull,
     runPush,
+    runCheckout,
+    runMerge,
+    runCommit,
     runScan,
+    saveConfig,
     openTerminal,
     openFinder,
     clearLogs,
@@ -34,11 +44,12 @@ export function App() {
   // Log drawer open/close state
   const [isLogsOpen, setIsLogsOpen] = useState<boolean>(false);
 
-  // Modal triggers / placeholders for Task 8
-  const [isScanModalOpen, setIsScanModalOpen] = useState<boolean>(false);
-  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState<boolean>(false);
-  const [isMergeModalOpen, setIsMergeModalOpen] = useState<boolean>(false);
-  const [isCommitModalOpen, setIsCommitModalOpen] = useState<boolean>(false);
+  // Modal open/close states
+  const [isScanOpen, setIsScanOpen] = useState<boolean>(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
+  const [isMergeOpen, setIsMergeOpen] = useState<boolean>(false);
+  const [isCommitOpen, setIsCommitOpen] = useState<boolean>(false);
+  const [isModuleOpen, setIsModuleOpen] = useState<boolean>(false);
 
   // Workspace change handler
   const handleChangeWorkspace = useCallback(async () => {
@@ -50,7 +61,7 @@ export function App() {
 
   // Header action handlers
   const handleScan = useCallback(() => {
-    setIsScanModalOpen(true);
+    setIsScanOpen(true);
   }, []);
 
   const handleRefresh = useCallback(async () => {
@@ -68,15 +79,19 @@ export function App() {
   }, [runPush]);
 
   const handleCheckout = useCallback(() => {
-    setIsCheckoutModalOpen(true);
+    setIsCheckoutOpen(true);
   }, []);
 
   const handleMerge = useCallback(() => {
-    setIsMergeModalOpen(true);
+    setIsMergeOpen(true);
   }, []);
 
   const handleCommit = useCallback(() => {
-    setIsCommitModalOpen(true);
+    setIsCommitOpen(true);
+  }, []);
+
+  const handleManageModules = useCallback(() => {
+    setIsModuleOpen(true);
   }, []);
 
   const handlePullRepo = useCallback(
@@ -85,6 +100,53 @@ export function App() {
       await runPull([repoPath]);
     },
     [runPull]
+  );
+
+  // Modal action handlers
+  const handlePerformScan = useCallback(
+    async (dir: string) => {
+      setIsLogsOpen(true);
+      return await runScan(dir);
+    },
+    [runScan]
+  );
+
+  const handleApplyScanConfig = useCallback(
+    async (modulesMap: Record<string, string[]>) => {
+      await saveConfig({ modules: modulesMap });
+    },
+    [saveConfig]
+  );
+
+  const handlePerformCheckout = useCallback(
+    async (branch: string, create: boolean, base?: string, targetRepos?: string[]) => {
+      setIsLogsOpen(true);
+      await runCheckout(branch, create, base, targetRepos);
+    },
+    [runCheckout]
+  );
+
+  const handlePerformMerge = useCallback(
+    async (targetBranch: string, targetRepos?: string[]) => {
+      setIsLogsOpen(true);
+      await runMerge(targetBranch, targetRepos);
+    },
+    [runMerge]
+  );
+
+  const handlePerformCommit = useCallback(
+    async (message: string, push: boolean, targetRepos?: string[]) => {
+      setIsLogsOpen(true);
+      await runCommit(message, push, targetRepos);
+    },
+    [runCommit]
+  );
+
+  const handleSaveModuleConfig = useCallback(
+    async (newConfig: MgitConfig) => {
+      await saveConfig(newConfig);
+    },
+    [saveConfig]
   );
 
   return (
@@ -111,6 +173,7 @@ export function App() {
         onCheckout={handleCheckout}
         onMerge={handleMerge}
         onCommit={handleCommit}
+        onManageModules={handleManageModules}
         onToggleTheme={toggleTheme}
         onToggleLogs={() => setIsLogsOpen((prev) => !prev)}
       />
@@ -140,124 +203,45 @@ export function App() {
         loading={loading}
       />
 
-      {/* Task 8 Modal Placeholders */}
-      {isScanModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onClick={() => setIsScanModalOpen(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-800 rounded-lg p-5 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-sm font-semibold mb-2">扫描工作区 (Scan Modal)</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              交互弹窗组件将在 Task 8 中完整挂载。您也可以直接点击【立即扫描】执行并查看日志。
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setIsScanModalOpen(false)}
-                className="px-3 py-1.5 text-xs rounded bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200"
-              >
-                取消
-              </button>
-              <button
-                onClick={async () => {
-                  setIsScanModalOpen(false);
-                  setIsLogsOpen(true);
-                  await runScan(workspace);
-                }}
-                className="px-3 py-1.5 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
-              >
-                立即扫描
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modals */}
+      <ScanModal
+        isOpen={isScanOpen}
+        onClose={() => setIsScanOpen(false)}
+        currentWorkspace={workspace}
+        onScan={handlePerformScan}
+        onApplyConfig={handleApplyScanConfig}
+      />
 
-      {isCheckoutModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onClick={() => setIsCheckoutModalOpen(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-800 rounded-lg p-5 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-sm font-semibold mb-2">检出/切换分支 (Checkout Modal)</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              交互弹窗组件将在 Task 8 中完整挂载。
-            </p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setIsCheckoutModalOpen(false)}
-                className="px-3 py-1.5 text-xs rounded bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200"
-              >
-                关闭
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        selectedRepos={Array.from(selectedPaths)}
+        allRepos={repos}
+        onCheckout={handlePerformCheckout}
+      />
 
-      {isMergeModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onClick={() => setIsMergeModalOpen(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-800 rounded-lg p-5 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-sm font-semibold mb-2">分支合并 (Merge Modal)</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              交互弹窗组件将在 Task 8 中完整挂载。
-            </p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setIsMergeModalOpen(false)}
-                className="px-3 py-1.5 text-xs rounded bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200"
-              >
-                关闭
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <MergeModal
+        isOpen={isMergeOpen}
+        onClose={() => setIsMergeOpen(false)}
+        selectedRepos={Array.from(selectedPaths)}
+        allRepos={repos}
+        onMerge={handlePerformMerge}
+      />
 
-      {isCommitModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onClick={() => setIsCommitModalOpen(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-800 rounded-lg p-5 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-sm font-semibold mb-2">代码提交 (Commit Modal)</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              交互弹窗组件将在 Task 8 中完整挂载。
-            </p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setIsCommitModalOpen(false)}
-                className="px-3 py-1.5 text-xs rounded bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200"
-              >
-                关闭
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CommitModal
+        isOpen={isCommitOpen}
+        onClose={() => setIsCommitOpen(false)}
+        selectedRepos={Array.from(selectedPaths)}
+        allRepos={repos}
+        onCommit={handlePerformCommit}
+      />
+
+      <ModuleModal
+        isOpen={isModuleOpen}
+        onClose={() => setIsModuleOpen(false)}
+        config={config}
+        onSaveConfig={handleSaveModuleConfig}
+      />
     </div>
   );
 }

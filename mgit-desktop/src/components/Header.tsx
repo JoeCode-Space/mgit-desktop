@@ -14,6 +14,7 @@ import {
   Terminal,
   Layers,
   CheckCircle2,
+  Settings,
 } from 'lucide-react';
 import type { MgitConfig, ThemeMode } from '../types';
 
@@ -38,6 +39,7 @@ export interface HeaderProps {
   onCheckout: () => void;
   onMerge: () => void;
   onCommit: () => void;
+  onManageModules?: () => void;
   onToggleTheme: () => void;
   onToggleLogs: () => void;
 }
@@ -62,6 +64,7 @@ export const Header: FC<HeaderProps> = ({
   onCheckout,
   onMerge,
   onCommit,
+  onManageModules,
   onToggleTheme,
   onToggleLogs,
 }) => {
@@ -116,6 +119,16 @@ export const Header: FC<HeaderProps> = ({
               </select>
             ) : (
               <span className="text-xs text-slate-400 dark:text-slate-500 italic">无模块</span>
+            )}
+            {onManageModules && (
+              <button
+                type="button"
+                onClick={onManageModules}
+                title="管理模块 (配置 mgit.yaml)"
+                className="ml-0.5 p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
 
