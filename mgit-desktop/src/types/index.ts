@@ -51,6 +51,14 @@ export interface ScanSummary {
 }
 
 /**
+ * Aggregated branch summary across repositories matching Rust models.
+ */
+export interface BranchSummary {
+  local: string[];
+  remote: string[];
+}
+
+/**
  * Theme mode options.
  */
 export type ThemeMode = 'dark' | 'light' | 'system';
@@ -96,4 +104,5 @@ export interface UseMgitReturn {
   openFinder: (path: string) => Promise<void>;
   clearLogs: () => void;
   addLog: (log: LogEvent) => void;
+  getBranches: (repos?: string[]) => Promise<BranchSummary>;
 }
