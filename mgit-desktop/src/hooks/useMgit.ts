@@ -7,6 +7,7 @@ import type {
   GitOpResult,
   LogEvent,
   ScanSummary,
+  BranchSummary,
   UseMgitReturn,
 } from '../types';
 
@@ -29,6 +30,11 @@ const MOCK_CONFIG: MgitConfig = {
     frontend: ['mgit-desktop'],
     backend: ['services/core', 'libs/common'],
   },
+};
+
+const MOCK_BRANCHES: BranchSummary = {
+  local: ['main', 'master', 'dev', 'test', 'feature/login', 'release/v1.0'],
+  remote: ['origin/main', 'origin/master', 'origin/dev', 'origin/feature/login'],
 };
 
 const createMockRepoStatus = (repoPath: string, workspaceDir: string): RepoStatus => {
@@ -806,6 +812,38 @@ export function useMgit(): UseMgitReturn {
     []
   );
 
+  const getBranches = useCallback(
+    async (targetRepos?: string[]): Promise<BranchSummary> => {
+      const ws = workspaceRef.current;
+      const cfg = configRef.current;
+      const mod = currentModuleRef.current;
+
+      const reposToQuery =
+        targetRepos && targetRepos.length > 0
+          ? targetRepos
+          : cfg?.modules[mod] || reposRef.current.map((r) => r.relative_path);
+
+      if (reposToQuery.length === 0) {
+        return { local: [], remote: [] };
+      }
+
+      if (isTauri()) {
+        try {
+          return await invoke<BranchSummary>('get_workspace_branches', {
+            workspace: ws,
+            repos: reposToQuery,
+          });
+        } catch (err) {
+          console.error('Failed to get branches:', err);
+          return { local: [], remote: [] };
+        }
+      } else {
+        return MOCK_BRANCHES;
+      }
+    },
+    []
+  );
+
   return {
     workspace,
     config,
@@ -834,6 +872,7 @@ export function useMgit(): UseMgitReturn {
     openFinder,
     clearLogs,
     addLog,
+    getBranches,
   };
 }
 

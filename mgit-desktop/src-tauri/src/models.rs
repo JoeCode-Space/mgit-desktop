@@ -42,3 +42,10 @@ pub struct LogEvent {
     pub repo: Option<String>,
     pub message: String,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+pub struct BranchSummary {
+    pub local: Vec<String>,
+    pub remote: Vec<String>,
+}
+

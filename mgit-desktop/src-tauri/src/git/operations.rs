@@ -1,12 +1,13 @@
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use rayon::prelude::*;
 
 use crate::git::executor::{
-    get_repo_status, git_checkout, git_commit, git_merge, git_pull, git_push,
+    get_repo_branches, get_repo_status, git_checkout, git_commit, git_merge, git_pull, git_push,
 };
-use crate::models::{GitOpResult, LogEvent, RepoStatus};
+use crate::models::{BranchSummary, GitOpResult, LogEvent, RepoStatus};
 
 /// Helper to generate an ISO-8601 formatted UTC timestamp string.
 pub fn current_timestamp() -> String {
@@ -119,6 +120,34 @@ pub fn batch_status(workspace: &Path, repos: &[String]) -> Vec<RepoStatus> {
             get_repo_status(&repo_dir, workspace).ok()
         })
         .collect()
+}
+
+/// 并行查询并聚合多个仓库的本地与远程分支列表。
+pub fn batch_get_branches(workspace: &Path, repos: &[String]) -> BranchSummary {
+    let results: Vec<BranchSummary> = repos
+        .par_iter()
+        .filter_map(|repo| {
+            let repo_dir = resolve_repo_dir(workspace, repo);
+            get_repo_branches(&repo_dir).ok()
+        })
+        .collect();
+
+    let mut local_set = BTreeSet::new();
+    let mut remote_set = BTreeSet::new();
+
+    for summary in results {
+        for l in summary.local {
+            local_set.insert(l);
+        }
+        for r in summary.remote {
+            remote_set.insert(r);
+        }
+    }
+
+    BranchSummary {
+        local: local_set.into_iter().collect(),
+        remote: remote_set.into_iter().collect(),
+    }
 }
 
 /// Pull changes in parallel across multiple repositories.
@@ -304,5 +333,27 @@ mod tests {
             let guard = logs.lock().unwrap();
             assert!(guard.iter().any(|l| l.level == "error"));
         }
+    }
+
+    #[test]
+    fn test_batch_get_branches() {
+        let temp = TempDirGuard::new("mgit_batch_branches_test");
+        let ws = temp.path();
+
+        let r1 = ws.join("repo-1");
+        let r2 = ws.join("repo-2");
+        create_dir_all(&r1).unwrap();
+        create_dir_all(&r2).unwrap();
+        init_repo_with_commit(&r1, "a.txt");
+        init_repo_with_commit(&r2, "b.txt");
+
+        let _ = git_checkout(&r1, "feat/branch-1", true, None);
+        let _ = git_checkout(&r2, "feat/branch-2", true, None);
+
+        let repos = vec!["repo-1".to_string(), "repo-2".to_string()];
+        let summary = batch_get_branches(ws, &repos);
+
+        assert!(summary.local.contains(&"feat/branch-1".to_string()));
+        assert!(summary.local.contains(&"feat/branch-2".to_string()));
     }
 }

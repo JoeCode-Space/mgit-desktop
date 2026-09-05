@@ -50,6 +50,12 @@ export interface ScanSummary {
   modules: Record<string, string[]>;
 }
 
+/** 聚合多仓库的本地与远程分支汇总数据模型。 */
+export interface BranchSummary {
+  local: string[];
+  remote: string[];
+}
+
 /**
  * Theme mode options.
  */
@@ -96,4 +102,5 @@ export interface UseMgitReturn {
   openFinder: (path: string) => Promise<void>;
   clearLogs: () => void;
   addLog: (log: LogEvent) => void;
+  getBranches: (repos?: string[]) => Promise<BranchSummary>;
 }

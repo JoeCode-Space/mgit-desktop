@@ -1,7 +1,8 @@
+use std::collections::BTreeSet;
 use std::path::{Component, Path};
 use std::process::Command;
 
-use crate::models::{GitOpResult, RepoStatus};
+use crate::models::{BranchSummary, GitOpResult, RepoStatus};
 
 /// Helper to format a fallback repository name from its directory path.
 fn repo_name(repo_dir: &Path) -> String {
@@ -375,6 +376,44 @@ pub fn git_commit(repo_dir: &Path, message: &str, push: bool) -> GitOpResult {
     }
 }
 
+/// 获取指定仓库的本地分支与远程分支列表
+pub fn get_repo_branches(repo_dir: &Path) -> Result<BranchSummary, String> {
+    if !repo_dir.exists() {
+        return Err(format!("Repository directory does not exist: '{}'", repo_dir.display()));
+    }
+
+    let (code, stdout, stderr) = run_git(
+        repo_dir,
+        &["for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes"],
+    )?;
+
+    if code != 0 {
+        return Err(format!("git for-each-ref failed: {}", stderr.trim()));
+    }
+
+    let mut local_set = BTreeSet::new();
+    let mut remote_set = BTreeSet::new();
+
+    for line in stdout.lines() {
+        let refname = line.trim();
+        if let Some(branch) = refname.strip_prefix("refs/heads/") {
+            if !branch.is_empty() {
+                local_set.insert(branch.to_string());
+            }
+        } else if let Some(branch) = refname.strip_prefix("refs/remotes/") {
+            // 忽略 /HEAD 符号引用
+            if !branch.ends_with("/HEAD") && !branch.is_empty() {
+                remote_set.insert(branch.to_string());
+            }
+        }
+    }
+
+    Ok(BranchSummary {
+        local: local_set.into_iter().collect(),
+        remote: remote_set.into_iter().collect(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -487,5 +526,24 @@ mod tests {
         let non_repo_status = get_repo_status(temp.path(), temp.path());
         assert!(non_repo_status.is_err());
         assert!(non_repo_status.unwrap_err().contains("not a git repository"));
+    }
+
+    #[test]
+    fn test_get_repo_branches() {
+        let temp = TempDirGuard::new("mgit_branches_test");
+        let repo_path = temp.path();
+        init_test_repo(repo_path);
+
+        // Initial commit
+        let file_path = repo_path.join("file.txt");
+        write(&file_path, "test").unwrap();
+        let _ = git_commit(repo_path, "commit 1", false);
+
+        // Create a local branch
+        let _ = git_checkout(repo_path, "feature/login", true, None);
+
+        let branches = get_repo_branches(repo_path).expect("get_repo_branches should succeed");
+        assert!(branches.local.contains(&"feature/login".to_string()));
+        assert!(branches.local.contains(&"main".to_string()) || branches.local.contains(&"master".to_string()));
     }
 }
