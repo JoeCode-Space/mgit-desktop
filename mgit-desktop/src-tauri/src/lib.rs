@@ -10,9 +10,10 @@ use tauri::{command, generate_context, generate_handler, AppHandle, Builder, Emi
 
 use crate::config::{load_config, save_config};
 use crate::git::operations::{
-    batch_checkout, batch_commit, batch_merge, batch_pull, batch_push, batch_status,
+    batch_checkout, batch_commit, batch_get_branches, batch_merge, batch_pull, batch_push,
+    batch_status,
 };
-use crate::models::{GitOpResult, MgitConfig, RepoStatus, ScanSummary};
+use crate::models::{BranchSummary, GitOpResult, MgitConfig, RepoStatus, ScanSummary};
 use crate::scanner::scan_directory;
 
 /// Load mgit.yaml from the specified workspace directory.
@@ -39,6 +40,15 @@ fn scan_workspace(workspace: String) -> Result<ScanSummary, String> {
 #[command]
 fn get_repos_status(workspace: String, repos: Vec<String>) -> Result<Vec<RepoStatus>, String> {
     Ok(batch_status(Path::new(&workspace), &repos))
+}
+
+/// Retrieve aggregated local and remote branch list across multiple repositories.
+#[command]
+fn get_workspace_branches(
+    workspace: String,
+    repos: Vec<String>,
+) -> Result<BranchSummary, String> {
+    Ok(batch_get_branches(Path::new(&workspace), &repos))
 }
 
 /// Pull latest changes across multiple repositories in parallel with real-time log emission.
@@ -218,6 +228,7 @@ pub fn run() {
             save_workspace_config,
             scan_workspace,
             get_repos_status,
+            get_workspace_branches,
             git_pull,
             git_push,
             git_checkout,
@@ -324,5 +335,28 @@ mod tests {
         assert_eq!(statuses.len(), 1);
         assert_eq!(statuses[0].name, "repo-x");
         assert!(!statuses[0].dirty);
+    }
+
+    #[test]
+    fn test_get_workspace_branches_command() {
+        let temp = TempDirGuard::new("mgit_cmd_branches_test");
+        let ws_path = temp.path();
+        let ws = ws_path.to_string_lossy().to_string();
+
+        let repo_dir = ws_path.join("repo-y");
+        create_dir_all(&repo_dir).unwrap();
+
+        let _ = Command::new("git").args(["init"]).current_dir(&repo_dir).output();
+        let _ = Command::new("git").args(["config", "user.name", "tester"]).current_dir(&repo_dir).output();
+        let _ = Command::new("git").args(["config", "user.email", "test@test.com"]).current_dir(&repo_dir).output();
+
+        write(repo_dir.join("init.txt"), "hello").unwrap();
+        let _ = Command::new("git").args(["add", "-A"]).current_dir(&repo_dir).output();
+        let _ = Command::new("git").args(["commit", "-m", "init"]).current_dir(&repo_dir).output();
+        let _ = Command::new("git").args(["checkout", "-b", "feature/my-branch"]).current_dir(&repo_dir).output();
+
+        let repos = vec!["repo-y".to_string()];
+        let summary = get_workspace_branches(ws, repos).expect("get_workspace_branches should succeed");
+        assert!(summary.local.contains(&"feature/my-branch".to_string()));
     }
 }
