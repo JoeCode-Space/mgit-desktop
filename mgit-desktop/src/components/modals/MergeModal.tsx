@@ -1,5 +1,6 @@
 import { useState, useMemo, type FC } from 'react';
 import { GitMerge, X, Loader2, Info, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { BranchCombobox } from '../common/BranchCombobox';
 import type { RepoStatus } from '../../types';
 
 export interface MergeModalProps {
@@ -94,19 +95,16 @@ export const MergeModal: FC<MergeModalProps> = ({
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
               待合并的分支名称 (Branch to merge) <span className="text-rose-500">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={branchToMerge}
-                onChange={(e) => setBranchToMerge(e.target.value)}
-                placeholder="例如: origin/main 或 dev"
-                disabled={isLoading}
-                required
-                autoFocus
-                className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-              />
-              <GitMerge className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
-            </div>
+            <BranchCombobox
+              value={branchToMerge}
+              onChange={setBranchToMerge}
+              repos={targetReposList.map((r) => r.relative_path || r.path)}
+              placeholder="例如: origin/main 或 dev"
+              required
+              autoFocus
+              disabled={isLoading}
+              icon={<GitMerge className="w-3.5 h-3.5" />}
+            />
           </div>
 
           {/* Informational Alert */}

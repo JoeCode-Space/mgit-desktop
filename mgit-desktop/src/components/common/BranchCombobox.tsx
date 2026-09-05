@@ -125,14 +125,23 @@ export const BranchCombobox: FC<BranchComboboxProps> = ({
     return items;
   }, [filteredLocal, filteredRemote, showCustom, trimmedValue]);
 
-  // 选项发生变化时自适应高亮索引
+  // 当搜索查询变化时，重置高亮索引为 0 确保首项聚焦
+  useEffect(() => {
+    if (flatItems.length > 0) {
+      setHighlightIndex(0);
+    } else {
+      setHighlightIndex(-1);
+    }
+  }, [query]);
+
+  // 当选项列表长度发生变化时确保高亮索引有效
   useEffect(() => {
     if (flatItems.length > 0) {
       setHighlightIndex((prev) => (prev >= 0 && prev < flatItems.length ? prev : 0));
     } else {
       setHighlightIndex(-1);
     }
-  }, [flatItems]);
+  }, [flatItems.length]);
 
   // 高亮项随上下键滚动保持在可视区域
   useEffect(() => {

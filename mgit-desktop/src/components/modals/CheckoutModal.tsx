@@ -1,5 +1,6 @@
 import { useState, useMemo, type FC } from 'react';
 import { GitBranch, X, Loader2, GitFork, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { BranchCombobox } from '../common/BranchCombobox';
 import type { RepoStatus } from '../../types';
 
 export interface CheckoutModalProps {
@@ -97,19 +98,15 @@ export const CheckoutModal: FC<CheckoutModalProps> = ({
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
               目标分支名称 (Target Branch) <span className="text-rose-500">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={targetBranch}
-                onChange={(e) => setTargetBranch(e.target.value)}
-                placeholder="例如: main, dev 或 feature/login"
-                disabled={isLoading}
-                required
-                autoFocus
-                className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-              />
-              <GitBranch className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
-            </div>
+            <BranchCombobox
+              value={targetBranch}
+              onChange={setTargetBranch}
+              repos={targetReposList.map((r) => r.relative_path || r.path)}
+              placeholder="例如: main, dev 或 feature/login"
+              required
+              autoFocus
+              disabled={isLoading}
+            />
           </div>
 
           {/* Create Branch Checkbox */}
@@ -133,17 +130,14 @@ export const CheckoutModal: FC<CheckoutModalProps> = ({
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                 基于分支 (Base Branch, 可选)
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={baseBranch}
-                  onChange={(e) => setBaseBranch(e.target.value)}
-                  placeholder="留空则基于当前 HEAD 分支"
-                  disabled={isLoading}
-                  className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                />
-                <GitFork className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
-              </div>
+              <BranchCombobox
+                value={baseBranch}
+                onChange={setBaseBranch}
+                repos={targetReposList.map((r) => r.relative_path || r.path)}
+                placeholder="留空则基于当前 HEAD 分支"
+                disabled={isLoading}
+                icon={<GitFork className="w-3.5 h-3.5" />}
+              />
             </div>
           )}
 
