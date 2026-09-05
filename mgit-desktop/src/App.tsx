@@ -34,6 +34,7 @@ export function App() {
     runCommit,
     runScan,
     saveConfig,
+    pickDirectory,
     openTerminal,
     openFinder,
     clearLogs,
@@ -51,13 +52,20 @@ export function App() {
   const [isCommitOpen, setIsCommitOpen] = useState<boolean>(false);
   const [isModuleOpen, setIsModuleOpen] = useState<boolean>(false);
 
-  // Workspace change handler
+  // Workspace change handler: invokes native folder picker dialog
   const handleChangeWorkspace = useCallback(async () => {
-    const input = window.prompt('请输入工作区绝对路径 (Workspace Directory):', workspace);
-    if (input && input.trim() && input.trim() !== workspace) {
-      await setWorkspace(input.trim());
+    try {
+      const selected = await pickDirectory(workspace);
+      if (selected && selected.trim() && selected.trim() !== workspace) {
+        await setWorkspace(selected.trim());
+      }
+    } catch {
+      const input = window.prompt('请输入工作区绝对路径 (Workspace Directory):', workspace);
+      if (input && input.trim() && input.trim() !== workspace) {
+        await setWorkspace(input.trim());
+      }
     }
-  }, [workspace, setWorkspace]);
+  }, [workspace, pickDirectory, setWorkspace]);
 
   // Header action handlers
   const handleScan = useCallback(() => {
@@ -210,6 +218,7 @@ export function App() {
         currentWorkspace={workspace}
         onScan={handlePerformScan}
         onApplyConfig={handleApplyScanConfig}
+        onPickDirectory={pickDirectory}
       />
 
       <CheckoutModal

@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Save,
   FolderSearch,
+  FolderOpen,
 } from 'lucide-react';
 import type { ScanSummary } from '../../types';
 
@@ -18,6 +19,7 @@ export interface ScanModalProps {
   currentWorkspace: string;
   onScan: (dir: string) => Promise<ScanSummary>;
   onApplyConfig: (modules: Record<string, string[]>) => Promise<void>;
+  onPickDirectory?: (defaultPath?: string) => Promise<string | null>;
 }
 
 export const ScanModal: FC<ScanModalProps> = ({
@@ -26,6 +28,7 @@ export const ScanModal: FC<ScanModalProps> = ({
   currentWorkspace,
   onScan,
   onApplyConfig,
+  onPickDirectory,
 }) => {
   const [scanDir, setScanDir] = useState<string>(currentWorkspace);
   const [isScanning, setIsScanning] = useState<boolean>(false);
@@ -130,6 +133,21 @@ export const ScanModal: FC<ScanModalProps> = ({
                 disabled={isScanning || isSaving}
                 className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 font-mono"
               />
+              {onPickDirectory && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const picked = await onPickDirectory(scanDir || currentWorkspace);
+                    if (picked) setScanDir(picked);
+                  }}
+                  disabled={isScanning || isSaving}
+                  title="浏览并选择系统文件夹"
+                  className="flex items-center gap-1 px-2.5 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition shrink-0"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  <span>浏览...</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleStartScan}

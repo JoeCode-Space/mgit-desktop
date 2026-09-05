@@ -789,6 +789,23 @@ export function useMgit(): UseMgitReturn {
     [addLog]
   );
 
+  const pickDirectory = useCallback(
+    async (defaultPath?: string): Promise<string | null> => {
+      try {
+        if (isTauri()) {
+          const result = await invoke<string | null>('pick_directory', { defaultPath });
+          return result;
+        } else {
+          return window.prompt('请输入工作区绝对路径 (Browser Mock):', defaultPath || workspaceRef.current);
+        }
+      } catch (err: unknown) {
+        console.warn('pick_directory error, falling back to prompt:', err);
+        return window.prompt('请输入工作区绝对路径:', defaultPath || workspaceRef.current);
+      }
+    },
+    []
+  );
+
   return {
     workspace,
     config,
@@ -812,6 +829,7 @@ export function useMgit(): UseMgitReturn {
     runCommit,
     runScan,
     saveConfig,
+    pickDirectory,
     openTerminal,
     openFinder,
     clearLogs,

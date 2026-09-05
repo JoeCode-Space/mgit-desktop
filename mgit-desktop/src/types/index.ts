@@ -91,6 +91,7 @@ export interface UseMgitReturn {
   runCommit: (message: string, push: boolean, targetRepos?: string[]) => Promise<GitOpResult[]>;
   runScan: (dir?: string) => Promise<ScanSummary>;
   saveConfig: (newConfig: MgitConfig) => Promise<void>;
+  pickDirectory: (defaultPath?: string) => Promise<string | null>;
   openTerminal: (path: string) => Promise<void>;
   openFinder: (path: string) => Promise<void>;
   clearLogs: () => void;

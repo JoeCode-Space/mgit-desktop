@@ -86,17 +86,24 @@ export const Header: FC<HeaderProps> = ({
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
 
           {/* Workspace Info & Switcher */}
-          <button
-            onClick={onChangeWorkspace}
-            title={`工作区路径: ${workspace}\n点击切换工作区`}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700 transition"
-          >
-            <FolderOpen className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-            <span className="font-semibold">{workspaceBaseName}</span>
-            <span className="text-slate-400 dark:text-slate-500 max-w-[140px] truncate hidden md:inline">
-              ({workspace})
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+            <span className="font-semibold text-slate-700 dark:text-slate-200 hidden sm:inline">工作区:</span>
+            <span
+              className="font-mono text-slate-600 dark:text-slate-300 max-w-[140px] md:max-w-[240px] lg:max-w-[360px] truncate"
+              title={`当前工作区: ${workspace}`}
+            >
+              {workspace ? `${workspaceBaseName} (${workspace})` : '未选择工作区'}
             </span>
-          </button>
+            <button
+              type="button"
+              onClick={onChangeWorkspace}
+              title="点击打开系统文件夹选择器，切换工作区目录"
+              className="ml-1 flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-600 shadow-2xs transition shrink-0"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              <span>切换...</span>
+            </button>
+          </div>
 
           {/* Module Selector */}
           <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-md px-2 py-1">

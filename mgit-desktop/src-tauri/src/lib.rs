@@ -174,6 +174,42 @@ fn open_in_finder(path: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Pick a directory using the platform native folder open dialog.
+#[command]
+fn pick_directory(default_path: Option<String>) -> Result<Option<String>, String> {
+    if cfg!(target_os = "macos") {
+        let script = if let Some(ref p) = default_path {
+            if Path::new(p).exists() {
+                format!(
+                    "POSIX path of (choose folder with prompt \"请选择工作区目录\" default location POSIX file \"{}\")",
+                    p.replace('"', "\\\"")
+                )
+            } else {
+                "POSIX path of (choose folder with prompt \"请选择工作区目录\")".to_string()
+            }
+        } else {
+            "POSIX path of (choose folder with prompt \"请选择工作区目录\")".to_string()
+        };
+
+        let output = Command::new("osascript")
+            .arg("-e")
+            .arg(&script)
+            .output()
+            .map_err(|e| format!("调用系统对话框失败: {}", e))?;
+
+        if output.status.success() {
+            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            let trimmed_path = path.trim_end_matches('/').to_string();
+            if !trimmed_path.is_empty() {
+                return Ok(Some(trimmed_path));
+            }
+        }
+        Ok(None)
+    } else {
+        Ok(None)
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     Builder::default()
@@ -189,6 +225,7 @@ pub fn run() {
             git_commit,
             open_in_terminal,
             open_in_finder,
+            pick_directory,
         ])
         .setup(|_app| Ok(()))
         .run(generate_context!())
