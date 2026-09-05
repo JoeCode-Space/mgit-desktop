@@ -50,9 +50,7 @@ export interface ScanSummary {
   modules: Record<string, string[]>;
 }
 
-/**
- * Aggregated branch summary across repositories matching Rust models.
- */
+/** 聚合多仓库的本地与远程分支汇总数据模型。 */
 export interface BranchSummary {
   local: string[];
   remote: string[];

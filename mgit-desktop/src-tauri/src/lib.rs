@@ -42,7 +42,7 @@ fn get_repos_status(workspace: String, repos: Vec<String>) -> Result<Vec<RepoSta
     Ok(batch_status(Path::new(&workspace), &repos))
 }
 
-/// Retrieve aggregated local and remote branch list across multiple repositories.
+/// 获取多个仓库的本地与远程分支聚合列表。
 #[command]
 fn get_workspace_branches(
     workspace: String,

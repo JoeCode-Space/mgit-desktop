@@ -122,7 +122,7 @@ pub fn batch_status(workspace: &Path, repos: &[String]) -> Vec<RepoStatus> {
         .collect()
 }
 
-/// Query aggregated local and remote branch list across multiple repositories in parallel.
+/// 并行查询并聚合多个仓库的本地与远程分支列表。
 pub fn batch_get_branches(workspace: &Path, repos: &[String]) -> BranchSummary {
     let results: Vec<BranchSummary> = repos
         .par_iter()
