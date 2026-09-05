@@ -1,6 +1,5 @@
 import type { FC } from 'react';
 import {
-  FolderGit2,
   FolderOpen,
   Search,
   RefreshCw,
@@ -78,9 +77,9 @@ export const Header: FC<HeaderProps> = ({
         {/* Left: Branding, Workspace, Module Selector */}
         <div className="flex items-center gap-3 flex-wrap min-w-0">
           {/* Logo */}
-          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-lg tracking-tight shrink-0">
-            <FolderGit2 className="w-6 h-6" />
-            <span>mgit</span>
+          <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold text-lg tracking-tight shrink-0">
+            <img src="/GitBear.png" alt="GitBear" className="w-6 h-6 rounded object-contain shadow-xs" />
+            <span>GitBear</span>
           </div>
 
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
